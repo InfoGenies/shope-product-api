@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const User = require('../model/userModel')
 const bcypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
-const baseUrl = "https://house-booking-api.fly.dev"; 
+const baseUrl = "https://shope-product-api-jetpackcompose.fly.dev";
 const path = require('path')
 
 
@@ -20,8 +20,9 @@ exports.signUp = (req, res) => {
               _id: new mongoose.Types.ObjectId(),
               email: req.body.email,
               password: hash,
-              username: req.body.username,
-              userType: req.body.userType,
+              firstname: req.body.firstname,
+              lastname: req.body.lastname,
+              phone: req.body.phone,
               dateJoined: req.body.dateJoined,
             });
 
@@ -36,7 +37,7 @@ exports.signUp = (req, res) => {
                 res.status(201).json({
                   message: 'User created successfully',
                   token: token,
-                  id : user._id
+                  id: user._id
                 });
               })
               .catch((err) => {
@@ -51,47 +52,47 @@ exports.signUp = (req, res) => {
       res.status(500).json({ error: 'Server error' });
     });
 };
-  exports.get_users = (req, res, next) => {
-    User.find()
-      .select('_id email password picture username phone language aboutMe userType dateJoined')
-      .exec()
-      .then(docs => {
-        const response = {
-          count: docs.length,
-          users: docs.map(doc => {
-            const pictureUrl = doc.picture ? `${baseUrl}/uploads/${path.basename(doc.picture)}` : null;
-            const phone = doc.phone ? doc.phone : null;
-            const language = doc.language ? doc.language : null;
-            const aboutMe = doc.aboutMe ? doc.aboutMe : null;
-            
-            return {
-              password: doc.password,
-              picture: pictureUrl,
-              email: doc.email,
-              _id: doc._id,
-              username: doc.username,
-              phone: phone,
-              language: language,
-              aboutMe: aboutMe,
-              userType: doc.userType,
-              dateJoined: doc.dateJoined,
-              request: {
-                Type: 'GET',
-                url: `${baseUrl}/user/${doc._id}`
-              }
-            };
-          })
-        };
-        
-        res.status(200).json(response);
-      })
-      .catch(err => {
-        console.log(err);
-        res.status(500).json({
-          error: err
-        });
+exports.get_users = (req, res, next) => {
+  User.find()
+    .select('_id email password picture username phone language aboutMe userType dateJoined')
+    .exec()
+    .then(docs => {
+      const response = {
+        count: docs.length,
+        users: docs.map(doc => {
+          const pictureUrl = doc.picture ? `${baseUrl}/uploads/${path.basename(doc.picture)}` : null;
+          const phone = doc.phone ? doc.phone : null;
+          const language = doc.language ? doc.language : null;
+          const aboutMe = doc.aboutMe ? doc.aboutMe : null;
+
+          return {
+            password: doc.password,
+            picture: pictureUrl,
+            email: doc.email,
+            _id: doc._id,
+            username: doc.username,
+            phone: phone,
+            language: language,
+            aboutMe: aboutMe,
+            userType: doc.userType,
+            dateJoined: doc.dateJoined,
+            request: {
+              Type: 'GET',
+              url: `${baseUrl}/user/${doc._id}`
+            }
+          };
+        })
+      };
+
+      res.status(200).json(response);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({
+        error: err
       });
-  };
+    });
+};
 exports.signIn = async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -109,12 +110,12 @@ exports.signIn = async (req, res) => {
       return;
     }
 
-    const token = jwt.sign({ userId: user._id },process.env.JWT_KEY, { expiresIn: '30h' });
-    res.status(200).json( 
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_KEY, { expiresIn: '30h' });
+    res.status(200).json(
       {
-       message : 'Authenification Succfully',
-      token : token,
-      id :  user._id
+        message: 'Authenification Succfully',
+        token: token,
+        id: user._id
       }
     )
 
@@ -122,21 +123,21 @@ exports.signIn = async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
-}  
+}
 
 exports.delete_user_byID = (req, res, next) => {
   const id = req.params.userId
 
   User.findByIdAndDelete(id)
-  .exec()
-  .then(result =>{
+    .exec()
+    .then(result => {
       res.status(200).json({
         message: 'User Deleted'
       })
-  })
-  .catch(err =>{
-      res.status(200).json({error: err})
-  })
+    })
+    .catch(err => {
+      res.status(200).json({ error: err })
+    })
 
 }
 exports.deleteAll = (req, res, next) => {
@@ -158,24 +159,24 @@ exports.deleteAll = (req, res, next) => {
 exports.fetch_byID = (req, res, next) => {
   const id = req.params.userId
   User.findById(id)
-  .select('_id email picture password username phone language aboutMe userType  dateJoined')
-  .exec()
-  .then(doc=>{
+    .select('_id email picture password username phone language aboutMe userType  dateJoined')
+    .exec()
+    .then(doc => {
       console.log(doc)
       // check if the user is not null 
-      if(doc)
-      {res.status(200).json(doc)
-      }else{
+      if (doc) {
+        res.status(200).json(doc)
+      } else {
 
-          res.status(404).json({
-              message:"Invalide ID Of This User"
-          })
+        res.status(404).json({
+          message: "Invalide ID Of This User"
+        })
       }
-  })
-  .catch(err =>{
+    })
+    .catch(err => {
       console.log(err)
-      res.status(500).json({error: err})
-  })
+      res.status(500).json({ error: err })
+    })
 
 }
 
@@ -202,10 +203,10 @@ exports.updateUser = (req, res, next) => {
     .exec()
     .then(result => {
       if (!result) {
-        return res.status(404).json({ message: 'User not found' , isUpdate: false });
+        return res.status(404).json({ message: 'User not found', isUpdate: false });
       }
 
-      res.status(200).json({ message: 'User updated successfully', user: result , isUpdate: true });
+      res.status(200).json({ message: 'User updated successfully', user: result, isUpdate: true });
     })
     .catch(err => {
       console.log(err);
