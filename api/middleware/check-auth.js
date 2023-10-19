@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken')
 module.exports = (req, res, next) => {
     try {
+        if (!req.headers.authorization) {
+            throw new Error('Authorization header missing');
+        }
         const token = req.headers.authorization.split(" ")[1]
         // here we try to verify our token , the methode verify return decode object
         const decoded = jwt.verify(token, process.env.JWT_KEY)

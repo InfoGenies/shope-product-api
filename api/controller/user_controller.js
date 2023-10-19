@@ -6,7 +6,7 @@ const baseUrl = "https://shope-product-api-jetpackcompose.fly.dev";
 const path = require('path')
 
 
-exports.signUp = (req, res) => {
+exports.sign_up = (req, res) => {
   User.find({ email: req.body.email })
     .then((users) => {
       if (users.length >= 1) {
@@ -14,7 +14,7 @@ exports.signUp = (req, res) => {
       } else {
         bcypt.hash(req.body.password, 10, (err, hash) => {
           if (err) {
-            res.status(500).json({ error: err });
+            return res.status(500).json({ error: err });
           } else {
             const user = new User({
               _id: new mongoose.Types.ObjectId(),
@@ -28,20 +28,21 @@ exports.signUp = (req, res) => {
 
             user
               .save()
-              .then((res) => {
+              .then((savedUser) => { // Change the variable name here to savedUser
                 const token = jwt.sign(
-                  { userId: user._id },
+                  { userId: savedUser._id }, // Use savedUser here as well
                   process.env.JWT_KEY,
                   { expiresIn: '30d' }
                 );
                 res.status(201).json({
+                  success : true,
                   message: 'User created successfully',
                   token: token,
-                  id: user._id
+                  data: savedUser._id // Use savedUser here too
                 });
               })
               .catch((err) => {
-                res.status(500).json({ error: err });
+                res.status(500).json({ error: 'Server error ' + err.message });
               });
           }
         });
@@ -49,12 +50,12 @@ exports.signUp = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      res.status(500).json({ error: 'Server error' });
+      res.status(500).json({ error: 'Server error ' + err.message });
     });
 };
 exports.get_users = (req, res, next) => {
   User.find()
-    .select('_id email password picture username phone language aboutMe userType dateJoined')
+    .select('_id email password picture firstname phone lastname  dateJoined')
     .exec()
     .then(docs => {
       const response = {
@@ -62,19 +63,16 @@ exports.get_users = (req, res, next) => {
         users: docs.map(doc => {
           const pictureUrl = doc.picture ? `${baseUrl}/uploads/${path.basename(doc.picture)}` : null;
           const phone = doc.phone ? doc.phone : null;
-          const language = doc.language ? doc.language : null;
-          const aboutMe = doc.aboutMe ? doc.aboutMe : null;
+       
 
           return {
             password: doc.password,
             picture: pictureUrl,
             email: doc.email,
             _id: doc._id,
-            username: doc.username,
+            firstname: doc.firstname,
             phone: phone,
-            language: language,
-            aboutMe: aboutMe,
-            userType: doc.userType,
+            lastname: doc.lastname,
             dateJoined: doc.dateJoined,
             request: {
               Type: 'GET',
@@ -93,29 +91,34 @@ exports.get_users = (req, res, next) => {
       });
     });
 };
-exports.signIn = async (req, res) => {
+exports.sign_in = async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
   try {
     const user = await User.findOne({ email }).exec();
     if (!user) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ 
+        success : false,
+        message: 'Invalid E-mail' });
       return;
     }
 
     const isMatch = await bcypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ 
+        success : false,
+        message: 'Invalid Password' });
       return;
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_KEY, { expiresIn: '30h' });
     res.status(200).json(
       {
+        success : true,
         message: 'Authenification Succfully',
         token: token,
-        id: user._id
+        data: user._id
       }
     )
 
@@ -125,8 +128,8 @@ exports.signIn = async (req, res) => {
   }
 }
 
-exports.delete_user_byID = (req, res, next) => {
-  const id = req.params.userId
+exports.delete_user_by_id = (req, res, next) => {
+  const id = req.params.userid
 
   User.findByIdAndDelete(id)
     .exec()
@@ -140,7 +143,7 @@ exports.delete_user_byID = (req, res, next) => {
     })
 
 }
-exports.deleteAll = (req, res, next) => {
+exports.delete_all = (req, res, next) => {
   User.deleteMany({})
     .exec()
     .then(result => {
@@ -156,11 +159,11 @@ exports.deleteAll = (req, res, next) => {
       });
     });
 }
-exports.fetch_byID = (req, res, next) => {
-  const id = req.params.userId
+exports.fetch_by_id = (req, res, next) => {
+  const id = req.params.userid
   User.findById(id)
-    .select('_id email picture password username phone language aboutMe userType  dateJoined')
-    .exec()
+  .select('_id email password picture firstname phone lastname  dateJoined')
+  .exec()
     .then(doc => {
       console.log(doc)
       // check if the user is not null 
@@ -180,8 +183,8 @@ exports.fetch_byID = (req, res, next) => {
 
 }
 
-exports.updateUser = (req, res, next) => {
-  const userId = req.params.userId; // Get the user ID from the request parameters
+exports.update_user = (req, res, next) => {
+  const userId = req.params.userid; // Get the user ID from the request parameters
 
   // Check if the request contains a file upload
   if (req.file) {

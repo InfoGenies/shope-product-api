@@ -23,21 +23,21 @@ const upload = multer({ storage });
 
 
 // create the registratin route 
-router.post('/sign-up', UserController.signUp)
+router.post('/sign-up', UserController.sign_up)
 
-router.post('/sign-in', UserController.signIn)
+router.post('/sign-in', UserController.sign_in)
 // deleting the user by id 
-router.delete('/:user-id', UserController.delete_user_byID)
+router.delete('/:userid', UserController.delete_user_by_id)
 
 // DELETE route to delete all user
-router.delete('/', UserController.deleteAll);
+router.delete('/', UserController.delete_all);
 
 router.get('/', UserController.get_users)
 
 // fetching by id 
-router.get('/:user-id', checkAuth, UserController.fetch_byID)
+router.get('/:userid', checkAuth, UserController.fetch_by_id)
 
-router.patch('/:user-id', upload.single('picture'), UserController.updateUser);
+router.patch('/:userid', upload.single('picture'), UserController.update_user);
 
 
 // this line means that if u want to use this function(router) in other file(class) u should export it  
