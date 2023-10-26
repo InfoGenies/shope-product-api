@@ -1,8 +1,12 @@
 const mongoose = require('mongoose')
 const User = require('../model/userModel')
 const bcypt = require('bcrypt')
-const jwt = require('jsonwebtoken');
-const baseUrl = "https://shope-product-api-jetpackcompose.fly.dev";
+const jwt = require('jsonwebtoken')
+const OTP = require('../models/OTP')
+const otpGenerator = require("otp-generator")
+require('dotenv').config()
+
+const baseUrl = "https://shope-product-api-jetpackcompose.fly.dev"
 const path = require('path')
 
 
@@ -12,7 +16,11 @@ exports.sign_up = (req, res) => {
       if (users.length >= 1) {
         return res.status(409).json({ message: 'Mail exists' });
       } else {
-        bcypt.hash(req.body.password, 10, (err, hash) => {
+        
+        // handling the paassword 
+        const saltRounds = 10
+
+        bcypt.hash(req.body.password, saltRounds, (err, hash) => {
           if (err) {
             return res.status(500).json({ error: err });
           } else {
@@ -215,4 +223,51 @@ exports.update_user = (req, res, next) => {
       console.log(err);
       res.status(500).json({ error: err });
     });
+};
+exports.sendotp = async (req, res) => {
+	try {
+		 // const { email } = req.body;
+
+    const email = req.body.email 
+
+		// Check if user is already present
+		// Find user with provided email
+		const checkUserPresent = await User.findOne({ email });
+		// to be used in case of signup
+
+		// If user found with provided email
+		if (checkUserPresent) {
+			// Return 401 Unauthorized status code with error message
+			return res.status(401).json({
+				success: false,
+				message: `User is Already Registered`,
+			});
+		}
+
+		var otp = otpGenerator.generate(6, {
+			upperCaseAlphabets: false,
+			lowerCaseAlphabets: false,
+			specialChars: false,
+		});
+		const result = await OTP.findOne({ otp: otp });
+		console.log("Result is Generate OTP Func");
+		console.log("OTP", otp);
+		console.log("Result", result);
+		while (result) {
+			otp = otpGenerator.generate(6, {
+				upperCaseAlphabets: false,
+			});
+		}
+		const otpPayload = { email, otp };
+		const otpBody = await OTP.create(otpPayload);
+		console.log("OTP Body", otpBody);
+		res.status(200).json({
+			success: true,
+			message: `OTP Sent Successfully`,
+			otp,
+		});
+	} catch (error) {
+		console.log(error.message);
+		return res.status(500).json({ success: false, error: error.message });
+	}
 };

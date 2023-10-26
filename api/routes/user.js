@@ -26,6 +26,9 @@ const upload = multer({ storage });
 router.post('/sign-up', UserController.sign_up)
 
 router.post('/sign-in', UserController.sign_in)
+
+router.post('/opt', UserController.sendotp)
+
 // deleting the user by id 
 router.delete('/:userid', UserController.delete_user_by_id)
 
